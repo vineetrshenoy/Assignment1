@@ -1,98 +1,96 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "mymalloc.h"
 
+
+#define HDRSIZE 4
+
 void test(){
 	printf("Entered the void method\n");
 	memvoid();
+} 
+
+
+/* Returns the address to the HEADER
+	INPUT: The char pointer 
+	OUTPUT: The address of the header stored in a pointer
+*/
+char * getHeader(char * p){
+	p = p - HDRSIZE;
+	return p;
 }
 
-typedef struct{
-	unsigned short isAllocated;
-	size_t size;
-} MemStruct;
 
-static char myblock[5000];
-int beenAccessed = 0;
-
-void* mymalloc(size_t size){
-
-
-	MemStruct* tempStruct = (MemStruct*)myblock;
-	if (beenAccessed == 0){ 																					// the memory is empty
-		beenAccessed = 1;
-		tempStruct->isAllocated = 0;
-		tempStruct->size = sizeof(myblock) - sizeof(MemStruct);
-		if ((size <= tempStruct->size) && (size > (tempStruct->size - sizeof(MemStruct) - 1))){ 					// use the whole memory block for the request
-			tempStruct->isAllocated = 1;
-			printf("Entire memory block used for request\n");
-			printf("Initial allocation complete...\n");
-			return ++tempStruct;
-		}
-		else if (size <= (tempStruct->size - sizeof(MemStruct) - 1)){ 												// create block of given size, dividing memory in two
-        	MemStruct* newStruct = (MemStruct*)(tempStruct + sizeof(MemStruct) + size);
-        	newStruct->isAllocated = 0;
-        	newStruct->size = tempStruct->size - sizeof(MemStruct) - size;
-        	tempStruct->size = size;
-            tempStruct->isAllocated = 1;
-            printf("Initial allocation complete...\n\n");
-            return ++tempStruct;
-        }
-        else {
-        	printf("Cannot fulfill allocation request:  Not enough memory\n");
-        	return NULL;
-        }
-	}
-	else {
-
-		int currentAddress = 0;
-		// if the starting point has already been allocated
-		// at this point, tempStruct is a pointer to the beginning of myblock
-
-		while (tempStruct->isAllocated == 1 || size > tempStruct->size){
-
-			printf("MemStruct at %d, size: %d %d\n", currentAddress, tempStruct->size, tempStruct->isAllocated);
-			currentAddress += sizeof(MemStruct) + tempStruct->size;
-			tempStruct = (MemStruct*)(tempStruct +  sizeof(MemStruct) + tempStruct->size);
-			printf("Next to MemStruct at %d, size: %d %d\n\n", currentAddress, tempStruct->size, tempStruct->isAllocated);
-
-
-		}
-		printf("==== Proceed to allocation ====\n");
-		// at this point tempStruct points to the first free memory that is large enough to hold the given size
-
-		MemStruct* newStruct = (MemStruct*)(tempStruct + sizeof(MemStruct) + size);
-		newStruct->isAllocated = 0;
-		newStruct->size = tempStruct->size - sizeof(MemStruct) - size;
-
-		printf("newStruct->size = %d\n", newStruct->size);
-		tempStruct->size = size;
-		tempStruct->isAllocated = 1;
-		printf("tempStruct->size = %d\n\n", tempStruct->size);
-		return ++tempStruct;
-
-	}
-
-	return NULL;
-
-
+/* Returns the address to the FOOTER
+	INPUT: The char pointer
+	OUTPUT: The address of the header stored in a pointer
+*/
+char * getFooter(char * p){
+	p = p + getSize(getHeader(p)) - (2 * HDRSIZE);
+	return p;
 }
 
-void myfree(void* ptr){
 
+/*Gets the size from the 4 byte header
+	INPUT: char pointer to header
+	OUPUT: return the size stored as an int
+*/
+int getSize(char * headerPointer){
+	int size = (*headerPointer) & ~1;
+	return size;
 }
+
+
+/*Gets the allocated bit from the 4 byte header
+	INPUT: char pointer to header
+	OUPUT: return the last bit as an int
+*/
+int getAllocation(char * p){
+	int allocated = (*p) & 1;
+	return allocated;
+}
+
+
+/*  Creates the header and footer given a pointer, size, and allocated flag
+	INPUT: char pointer, int size, int allocated flag
+	OUTPUT: None
+*/
+
+char * createExtremities(char * p, int size, int allocated){
+	// CREATE HEADER: ORs the size and allocated bit. This writes size to the upper
+	// 31 bits and the allocated flag to the LSB
+	*p = (int) size | allocated;
+
+
+	p = p  + size - HDRSIZE; 		// moves to the end of the block
+	
+	//CREATE FOOTER: Same as CREATE HEADER
+	*p = (int) size | allocated;
+
+	p = (p - size) + (2* HDRSIZE); // returns the beginning of usuable memory
+	return p;
+}
+
+
+
+
+
 
 int main(){
-	int* one = mymalloc(2000);
-	char* two = mymalloc(500);
-	double* three = mymalloc(600);
-	float* four = mymalloc(1000);
+	printf("HelloWorld\n");	
+	char * ptr = (char * ) malloc(256*sizeof(char));
+	printf("The address BEFORE manipulation is %p\n", ptr);
+	ptr = createExtremities(ptr, 16, 1);
+	printf("The address AFTER  manipulation is %p\n", ptr);
+	char * header = getHeader(ptr);
+	printf("The HEADER is at location %p \n", header);
+	printf("and has value %#010x \n", *header);
+	char * footer = getFooter(ptr);
+	printf("The FOOTER is at location %p \n", footer);
+	printf("and has value %d\n", *footer);
 
-
-	printf("\n================\n"
-			"Process complete\n"
-			"================\n");
-	return 0;
 }
+
+    Contact GitHub API Training Shop Blog About 
+
