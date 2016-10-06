@@ -1,4 +1,4 @@
-# This is a comment !
+	# This is a comment !
 #
 # ’myprogram’ is built from file1.c file2.c and file3.c
 CC = gcc
