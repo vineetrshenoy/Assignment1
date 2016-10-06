@@ -1,98 +1,106 @@
+/*
+ * my_new_malloc.c
+ *
+ *  Created on: Oct 6, 2016
+ *      Author: RyanMini
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "mymalloc.h"
 
-void test(){
-	printf("Entered the void method\n");
-	memvoid();
+#define WORDSIZE 4
+#define DSIZE (2*WORDSIZE)
+
+unsigned int pack(size, alloc){
+
+	return (size | alloc);
+
 }
 
-typedef struct{
-	unsigned short isAllocated;
-	size_t size;
-} MemStruct;
+// read a word at the given header pointer p
+unsigned int get(void* hp){
 
-static char myblock[5000];
-int beenAccessed = 0;
+	return *(unsigned int*)(hp);
 
-void* mymalloc(size_t size){
+}
+
+// write a word to the given header pointer p
+void put(void* hp, unsigned int val){
+
+	*(unsigned int*)(hp) = val;
+
+}
+
+// returns the size of the block given header pointer p
+unsigned int getSize(void* hp){
+
+	return (get(hp) & ~0x1);
+
+}
+
+// return the allocation bit given header pointer p
+unsigned int getAlloc(void* hp){
+
+	return (get(hp) & 0x1);
+
+}
+
+// return the header pointer given block pointer
+void* getHeader(void* bp){
+
+	return ((char*)(bp) - WORDSIZE);
+
+}
+
+// returns the footer pointer given block pointer
+void* getFooter(void* bp){
+
+	return ((char*)(bp + getSize(getHeader(bp)) - DSIZE));
+
+}
+
+// return pointer to next block given block pointer
+void* nextBlock(void* bp){
+
+	return ((char*)(bp) + getSize(getHeader(bp)) - WORDSIZE);
+
+}
+
+// return pointer to previous block given block pointer
+void* prevBlock(void* bp){
+
+	return ((char*)(bp) - getSize(getHeader(bp)) - DSIZE);
+
+}
+
+static char myblock[10000];
 
 
-	MemStruct* tempStruct = (MemStruct*)myblock;
-	if (beenAccessed == 0){ 																					// the memory is empty
-		beenAccessed = 1;
-		tempStruct->isAllocated = 0;
-		tempStruct->size = sizeof(myblock) - sizeof(MemStruct);
-		if ((size <= tempStruct->size) && (size > (tempStruct->size - sizeof(MemStruct) - 1))){ 					// use the whole memory block for the request
-			tempStruct->isAllocated = 1;
-			printf("Entire memory block used for request\n");
-			printf("Initial allocation complete...\n");
-			return ++tempStruct;
-		}
-		else if (size <= (tempStruct->size - sizeof(MemStruct) - 1)){ 												// create block of given size, dividing memory in two
-        	MemStruct* newStruct = (MemStruct*)(tempStruct + sizeof(MemStruct) + size);
-        	newStruct->isAllocated = 0;
-        	newStruct->size = tempStruct->size - sizeof(MemStruct) - size;
-        	tempStruct->size = size;
-            tempStruct->isAllocated = 1;
-            printf("Initial allocation complete...\n\n");
-            return ++tempStruct;
-        }
-        else {
-        	printf("Cannot fulfill allocation request:  Not enough memory\n");
-        	return NULL;
-        }
-	}
-	else {
+void init(){
 
-		int currentAddress = 0;
-		// if the starting point has already been allocated
-		// at this point, tempStruct is a pointer to the beginning of myblock
+	char* ptr = myblock;
+	printf("%p\n", ptr);
 
-		while (tempStruct->isAllocated == 1 || size > tempStruct->size){
+}
 
-			printf("MemStruct at %d, size: %d %d\n", currentAddress, tempStruct->size, tempStruct->isAllocated);
-			currentAddress += sizeof(MemStruct) + tempStruct->size;
-			tempStruct = (MemStruct*)(tempStruct +  sizeof(MemStruct) + tempStruct->size);
-			printf("Next to MemStruct at %d, size: %d %d\n\n", currentAddress, tempStruct->size, tempStruct->isAllocated);
+void myfree(void* ptr, int a, int b){
 
 
-		}
-		printf("==== Proceed to allocation ====\n");
-		// at this point tempStruct points to the first free memory that is large enough to hold the given size
+}
 
-		MemStruct* newStruct = (MemStruct*)(tempStruct + sizeof(MemStruct) + size);
-		newStruct->isAllocated = 0;
-		newStruct->size = tempStruct->size - sizeof(MemStruct) - size;
-
-		printf("newStruct->size = %d\n", newStruct->size);
-		tempStruct->size = size;
-		tempStruct->isAllocated = 1;
-		printf("tempStruct->size = %d\n\n", tempStruct->size);
-		return ++tempStruct;
-
-	}
-
+void* mymalloc(size_t size, int a, int b){
 	return NULL;
-
-
 }
 
-void myfree(void* ptr){
 
-}
+
+
+
 
 int main(){
-	int* one = mymalloc(2000);
-	char* two = mymalloc(500);
-	double* three = mymalloc(600);
-	float* four = mymalloc(1000);
 
+	init();
 
-	printf("\n================\n"
-			"Process complete\n"
-			"================\n");
-	return 0;
 }
+
