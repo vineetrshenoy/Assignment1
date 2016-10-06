@@ -19,7 +19,6 @@ void test(){
 */
 char * getHeader(char * p){
 	p = p - HDRSIZE;
-	int sizetwo = getSize(p);
 	return p;
 }
 
@@ -29,7 +28,7 @@ char * getHeader(char * p){
 	OUTPUT: The address of the header stored in a pointer
 */
 char * getFooter(char * p){
-	p = p + getSize(p) - (2 * HDRSIZE);
+	p = p + getSize(getHeader(p)) - (2 * HDRSIZE);
 	return p;
 }
 
@@ -38,8 +37,8 @@ char * getFooter(char * p){
 	INPUT: char pointer to header
 	OUPUT: return the size stored as an int
 */
-int getSize(char * p){
-	int size = (*p) & ~1;
+int getSize(char * headerPointer){
+	int size = (*headerPointer) & ~1;
 	return size;
 }
 
@@ -64,13 +63,13 @@ int getAllocation(char * p){
 char * createExtremities(char * p, int size, int allocated){
 	// CREATE HEADER: ORs the size and allocated bit. This writes size to the upper
 	// 31 bits and the allocated flag to the LSB
-	*p = size | allocated;
+	*p = (int) size | allocated;
 
 
 	p = p  + size - HDRSIZE; 		// moves to the end of the block
 	
 	//CREATE FOOTER: Same as CREATE HEADER
-	*p = size | allocated;
+	*p = (int) size | allocated;
 
 	p = (p - size) + (2* HDRSIZE); // returns the beginning of usuable memory
 	return p;
@@ -85,13 +84,13 @@ int main(){
 	printf("HelloWorld\n");	
 	char * ptr = (char * ) malloc(256*sizeof(char));
 	printf("The address BEFORE manipulation is %p\n", ptr);
-	ptr = createExtremities(ptr, 32, 1);
+	ptr = createExtremities(ptr, 16, 1);
 	printf("The address AFTER  manipulation is %p\n", ptr);
 	char * header = getHeader(ptr);
 	printf("The HEADER is at location %p \n", header);
 	printf("and has value %#010x \n", *header);
 	char * footer = getFooter(ptr);
 	printf("The FOOTER is at location %p \n", footer);
-	printf("and has value %#010x \n", *footer);
+	printf("and has value %d\n", *footer);
 
 }
