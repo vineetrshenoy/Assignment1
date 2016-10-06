@@ -12,6 +12,8 @@ void test(){
 } 
 
 
+static char myBlock[100000];
+
 /* Returns the address to the HEADER
 	INPUT: The char pointer 
 	OUTPUT: The address of the header stored in a pointer
@@ -37,7 +39,7 @@ char * getFooter(char * p){
 	OUPUT: return the size stored as an int
 */
 int getSize(char * headerPointer){
-	int size = (*headerPointer) & ~1;
+	int size = (*(int *)headerPointer) & ~1;
 	return size;
 }
 
@@ -47,7 +49,7 @@ int getSize(char * headerPointer){
 	OUPUT: return the last bit as an int
 */
 int getAllocation(char * p){
-	int allocated = (*p) & 1;
+	int allocated = (*(int *)p) & 1;
 	return allocated;
 }
 
@@ -60,13 +62,13 @@ int getAllocation(char * p){
 char * createExtremities(char * p, int size, int allocated){
 	// CREATE HEADER: ORs the size and allocated bit. This writes size to the upper
 	// 31 bits and the allocated flag to the LSB
-	*p = (int) size | allocated;
+	*p = (int) (size | allocated);
 
 
 	p = p  + size - HDRSIZE; 		// moves to the end of the block
 	
 	//CREATE FOOTER: Same as CREATE HEADER
-	*p = (int) size | allocated;
+	*p = (int) (size | allocated);
 
 	p = (p - size) + (2* HDRSIZE); // returns the beginning of usuable memory
 	return p;
@@ -88,9 +90,9 @@ int main(){
 	printf("and has value %#010x \n", *header);
 	char * footer = getFooter(ptr);
 	printf("The FOOTER is at location %p \n", footer);
-	printf("and has value %d\n", *footer);
+	printf("and has value %#010x\n", *footer);
 
 }
 
-    Contact GitHub API Training Shop Blog About 
+    
 
