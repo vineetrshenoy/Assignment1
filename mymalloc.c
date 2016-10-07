@@ -14,6 +14,31 @@ void test(){
 
 static char myBlock[100000];
 
+
+/* Frees the memory to which the pointer references
+	INPUT: The void pointer
+	OUTPUT: None
+*/
+
+void free(void * ptr){
+	//Gets the header and footer
+	char * header = (char *) getHeader(ptr);
+	char * footer = (char *) getFooter(ptr);
+	
+	//Gets the size and allocated bit
+	int size = getSize(header);
+	
+	//sets the value for header and footer
+	setValue(header, size, 0);
+	setValue(footer, size, 0);
+
+
+	//coalesce
+
+}
+
+
+
 /* Returns the address to the HEADER
 	INPUT: The char pointer 
 	OUTPUT: The address of the header stored in a pointer
@@ -54,6 +79,17 @@ int getAllocation(char * p){
 }
 
 
+/*  Sets the value of a four byte word based on size and allocation bit
+	INPUT: char pointer, int size, int allocated flag
+	OUTPUT: None
+*/
+void setValue(char * p, int size, int allocation){
+	int * ptr = (int *) p; 	// Casts to int pointer. Good practice since we are writing ints
+	*ptr = size | allocation;
+}
+
+
+
 /*  Creates the header and footer given a pointer, size, and allocated flag
 	INPUT: char pointer, int size, int allocated flag
 	OUTPUT: None
@@ -84,6 +120,8 @@ int main(){
 	char * ptr = (char * ) malloc(256*sizeof(char));
 	printf("The address BEFORE manipulation is %p\n", ptr);
 	ptr = createExtremities(ptr, 16, 1);
+	setValue(getHeader(ptr), 4,0);
+	setValue(getFooter(ptr),4,0);
 	printf("The address AFTER  manipulation is %p\n", ptr);
 	char * header = getHeader(ptr);
 	printf("The HEADER is at location %p \n", header);
