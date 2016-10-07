@@ -26,7 +26,7 @@ void free(void * ptr){
 	char * footer = (char *) getFooter(ptr);
 	
 	//Gets the size and allocated bit
-	int size = getSize(header);
+	int size = getSize(ptr);
 	
 	//sets the value for header and footer
 	setValue(header, size, 0);
@@ -37,7 +37,37 @@ void free(void * ptr){
 
 }
 
+/* Returns the pointer to the previous block. NOTE: this pointer points to the beginning
+	of usable memory. You must call getHeader() to get the header
+	INPUT: The char pointer pointing to the beginning of usuable memory
+	OUTPUT: The address of the previous block stored in a pointer
+*/
+char * getPrevious(char * ptr){
+	//RYAN CHECK THIS BECAUSE IT DIFFERS FROM THE TEXTBOOK
+	char * footer = ptr - 8;
+	int size = (*(int*) footer) & ~1;
+	// This is the first block. The previous block is the prologue block
+	if (size == 0)
+		return NULL;
+	char * previous = ptr - size;
+	return previous;
+}
 
+
+/* Returns the pointer to the next block. NOTE: this pointer points to the beginning
+	of usable memory. You must call getHeader() to get the header
+	INPUT: The char pointer pointing to the beginning of usuable memory
+	OUTPUT: The address of the next block stored in a pointer
+*/
+char * getNext(char * ptr){
+	//RYAN CHECK THIS BECAUSE IT DIFFERS FROM THE TEXTBOOK
+	int size = getSize(ptr);
+	char * next = ptr + size;
+	//The current block is the last block. We have reached the epilogue block
+	if (getSize(next) == 0)
+		return NULL;
+	return next;
+}
 
 /* Returns the address to the HEADER
 	INPUT: The char pointer 
@@ -54,7 +84,7 @@ char * getHeader(char * p){
 	OUTPUT: The address of the header stored in a pointer
 */
 char * getFooter(char * p){
-	p = p + getSize(getHeader(p)) - (2 * HDRSIZE);
+	p = p + getSize(p) - (2 * HDRSIZE);
 	return p;
 }
 
@@ -63,8 +93,8 @@ char * getFooter(char * p){
 	INPUT: char pointer to header
 	OUPUT: return the size stored as an int
 */
-int getSize(char * headerPointer){
-	int size = (*(int *)headerPointer) & ~1;
+int getSize(char * ptr){
+	int size = (*(int *)getHeader(ptr)) & ~1;
 	return size;
 }
 

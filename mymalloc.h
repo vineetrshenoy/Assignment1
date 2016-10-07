@@ -7,3 +7,5 @@ int getAllocation(char * p);
 char * createExtremities(char * p, int size, int allocated);
 void free(void * ptr);
 void setValue(char * p, int size, int allocation);
+char * getNext(char * ptr);
+char * getPrevious(char * ptr);
