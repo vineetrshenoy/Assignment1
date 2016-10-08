@@ -61,25 +61,26 @@ void* getHeader(void* bp){
 // returns the footer pointer given block pointer
 void* getFooter(void* bp){
 
-	return ((char*)(bp + getSize(getHeader(bp)) - DSIZE));
+	return ((char*)(bp) + getSize(getHeader(bp)) - DSIZE);
 
 }
 
 // return pointer to next block given block pointer
 void* nextBlock(void* bp){
 
-	return ((char*)(bp) + getSize(getHeader(bp)) - WORDSIZE);
+	return ((char*)(bp) + getSize(getHeader(bp)));
 
 }
 
 // return pointer to previous block given block pointer
 void* prevBlock(void* bp){
 
-	return ((char*)(bp) - getSize(getHeader(bp)) - DSIZE);
+	char* ptr = (char*)(bp) - DSIZE;
+	return ((char*)ptr - getSize(ptr) + DSIZE);
 
 }
 
-static char myblock[16384];
+static char myblock[131072];
 
 
 void init(){
@@ -99,8 +100,74 @@ void init(){
 
 }
 
-void myfree(void* ptr, int a, int b){
+// combines consecutive free blocks
+static void* coalesce(void* bp){
 
+	printf("Attempting to coalesce blocks of size %d, %d, %d\n", getSize(getFooter(prevBlock(bp))), getSize(getHeader(bp)), getSize(getHeader(nextBlock(bp))));
+	printf("Where prev footer is at %d and next header is at %d\n", (char*)getFooter(prevBlock(bp)) - (char*)myblock, (char*)getHeader(nextBlock(bp)) - (char*)myblock);
+	unsigned int prev_alloc = getAlloc(getFooter(prevBlock(bp)));
+	unsigned int next_alloc = getAlloc(getHeader(nextBlock(bp)));
+	unsigned int size = getSize(getHeader(bp));
+	printf("PREV ALLOC IS %d, NEXT ALLOC IS %d\n", prev_alloc, next_alloc);
+
+
+
+	if (prev_alloc && next_alloc){ 					// CASE 1
+		return bp;
+	}
+	else if (prev_alloc && !next_alloc){			// CASE 2
+		size += getSize(getHeader(nextBlock(bp)));
+		put(getHeader(bp), pack(size, 0));
+		put(getFooter(nextBlock(bp)), pack(size, 0));
+	}
+	else if (!prev_alloc && next_alloc){			// CASE 3
+		if ((char*)(bp) - (char*)myblock == DSIZE){
+			size += 0;
+			put(getFooter(bp), pack(size, 0));
+			put(getHeader(bp), pack(size, 0));
+		}
+		else {
+			size += getSize(getFooter(prevBlock(bp)));
+			put(getFooter(bp), pack(size, 0));
+			put(getHeader(prevBlock(bp)), pack(size, 0));
+			bp = prevBlock(bp);
+		}
+
+	}
+	else { 											// CASE 4
+		if ((char*)(bp) - (char*)myblock == DSIZE){
+			size += getSize(getHeader(nextBlock(bp)));
+			put(getHeader(bp), pack(size, 0));
+			put(getFooter(nextBlock(bp)), pack(size, 0));
+
+		}
+		else {
+			size += getSize(getHeader(nextBlock(bp))) + getSize(getFooter(prevBlock(bp)));
+			put(getHeader(prevBlock(bp)), pack(size, 0));
+			put(getFooter(nextBlock(bp)), pack(size, 0));
+			bp = prevBlock(bp);
+		}
+
+	}
+	return bp;
+
+}
+
+// frees allocated memory given block pointer bp
+void myfree(void* bp, int a, int b){
+
+	printf("\nBeginning free process\n");
+
+	size_t size = getSize(getHeader(bp));
+
+	put(getHeader(bp), pack(size, 0));
+	printf("Address at %p, myblock starts at %p, relative address is %d\n", (char*)(bp), (char*)myblock, (char*)(bp) - (char*)myblock);
+	printf("relative address of header is %d, relative address of footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
+	put(getFooter(bp), pack(size, 0));
+
+
+	coalesce(bp);
+	printf("Coalesce complete, free successful!\n\n");
 
 }
 
@@ -121,12 +188,15 @@ static void place(void* bp, size_t size){
 
 
 	size_t csize = getSize(getHeader(bp));
-	if ((csize - size) >= (2*DSIZE)){
+	if ((csize - size) > (2*DSIZE)){
 		put(getHeader(bp), pack(size, 1));
 		put(getFooter(bp), pack(size, 1));
+		printf("relative address of header is %d, relative address of footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
+
 		bp = nextBlock(bp);
 		put(getHeader(bp), pack(csize-size, 0));
 		put(getFooter(bp), pack(csize-size, 0));
+		printf("relative address of new header is %d, relative address of new footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
 	}
 	else {
 		put(getHeader(bp), pack(csize, 1));
@@ -145,12 +215,14 @@ void* mymalloc(size_t size, int a, int b){
 	}
 
 	// adjust block size to include overhead and alignment requirements
-	int adjSize = size % 4;
+	int adjSize = 4 - (size % 4);
 	asize = size + adjSize;
 	asize += 2*WORDSIZE;
+	printf("%d %d %d %d\n", size, adjSize, size + adjSize, asize);
 
 	// search the free list for a fit
 	if ((bp = findFit(asize)) != NULL){
+		printf("Relative address of bp is %d\n", (char*)(bp) - (char*)myblock);
 		place(bp, asize);
 		printf("\nAllocation complete!\n");
 		return bp;
@@ -167,9 +239,15 @@ void* mymalloc(size_t size, int a, int b){
 int main(){
 	init();
 
-	int* ptr = malloc(500);
-	int* ptr2 = malloc(274);
-	int* ptr3 = malloc(1234);
+	char *wilbur[3000];
+		int i;
+		for (i = 0; i < 3000; i++){
+			wilbur[i] = (char*)malloc(sizeof(char));
+			*(wilbur[i]) = 'a';
+		}
+		for (i = 0; i < 3000; i++){
+			free(wilbur[i]);
+		}
 
 }
 
