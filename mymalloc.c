@@ -17,18 +17,19 @@ static char myBlock[10000];
 
 
 /* Initializes the memory block with prologue, epilogue, header and footer
-	INPUT: The void pointer
+	INPUT: The char pointer to the beginning of the memory block
 	OUTPUT: None
 */
 
 void initialize(char * memBlock){
 	setValue(memBlock,0,1); 	//Setting the prologue block
-	char * epilogue = memBlock + MEMSIZE - HDRSIZE;
+	char * epilogue = memBlock + MEMSIZE - HDRSIZE;	//Get address of epilogue
 	setValue(epilogue, 0, 1);	//Setting the epilogue block
 
-	int memorySize = MEMSIZE - (2 * HDRSIZE);
-	setValue((memBlock + HDRSIZE), memorySize, 0);
-	setValue((epilogue - HDRSIZE), memorySize, 0);
+	int memorySize = MEMSIZE - (2 * HDRSIZE);	//Remaining memory size after prologue/epilogue
+	//Setting value for one contiguous memory block
+	setValue((memBlock + HDRSIZE), memorySize, 0);	//Set Header
+	setValue((epilogue - HDRSIZE), memorySize, 0);	//Set footer
 	
 }
 
