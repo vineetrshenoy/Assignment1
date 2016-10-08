@@ -9,3 +9,4 @@ void free(void * ptr);
 void setValue(char * p, int size, int allocation);
 char * getNext(char * ptr);
 char * getPrevious(char * ptr);
+void initialize(char * memBlock);

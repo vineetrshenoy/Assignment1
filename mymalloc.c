@@ -5,6 +5,7 @@
 
 
 #define HDRSIZE 4
+#define MEMSIZE 10000
 
 void test(){
 	printf("Entered the void method\n");
@@ -12,7 +13,25 @@ void test(){
 } 
 
 
-static char myBlock[100000];
+static char myBlock[10000];
+
+
+/* Initializes the memory block with prologue, epilogue, header and footer
+	INPUT: The void pointer
+	OUTPUT: None
+*/
+
+void initialize(char * memBlock){
+	setValue(memBlock,0,1); 	//Setting the prologue block
+	char * epilogue = memBlock + MEMSIZE - HDRSIZE;
+	setValue(epilogue, 0, 1);	//Setting the epilogue block
+
+	int memorySize = MEMSIZE - (2 * HDRSIZE);
+	setValue((memBlock + HDRSIZE), memorySize, 0);
+	setValue((epilogue - HDRSIZE), memorySize, 0);
+	
+}
+
 
 
 /* Frees the memory to which the pointer references
@@ -147,6 +166,17 @@ char * createExtremities(char * p, int size, int allocated){
 
 int main(){
 	printf("HelloWorld\n");	
+	char * hi = (char * ) malloc (128 *sizeof(char));
+	*hi = 16 | 0;
+	printf("The address of myBlock is %p \n", myBlock);
+	initialize(myBlock);
+	printf("The address of myBlock is %p \n", myBlock);
+	int *block = myBlock + 4;
+	printf("The header has address %p and value %#010x\n", block, *block);
+	int * footer = myBlock + *block;
+	printf("The footer has address %p and value %#010x\n", footer, *footer);
+
+	/*
 	char * ptr = (char * ) malloc(256*sizeof(char));
 	printf("The address BEFORE manipulation is %p\n", ptr);
 	ptr = createExtremities(ptr, 16, 1);
@@ -159,6 +189,7 @@ int main(){
 	char * footer = getFooter(ptr);
 	printf("The FOOTER is at location %p \n", footer);
 	printf("and has value %#010x\n", *footer);
+	*/
 
 }
 
