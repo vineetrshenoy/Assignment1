@@ -10,3 +10,4 @@ void setValue(char * p, int size, int allocation);
 char * getNext(char * ptr);
 char * getPrevious(char * ptr);
 void initialize(char * memBlock);
+char * findFit(int extendedSize);

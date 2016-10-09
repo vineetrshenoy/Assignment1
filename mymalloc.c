@@ -16,6 +16,49 @@ void test(){
 static char myBlock[10000];
 
 
+/* Uses the first fit algorithm to find the next block of adequate size
+	INPUT: The size of the block to be allocated
+	OUTPUT: The pointer of the available space in memory; NULL if no place
+*/
+
+char * mymalloc(size_t size){
+	
+}
+
+
+
+
+
+/* Uses the first fit algorithm to find the next block of adequate size
+	INPUT: The size of the block to be allocated
+	OUTPUT: The pointer of the available space in memory; NULL if no place
+*/
+
+char * findFit(int extendedSize){
+	char * ptr = myBlock;	//beginning of memory
+	ptr = ptr + HDRSIZE; 	//Move past prologue block
+	
+	//blockSize and allocated bit of the first block in mmory
+	int blockSize  = getSize(ptr);
+	int allocBit = getAllocation(ptr);
+	while ((blockSize ! = 0) && (allocBit != 1))	{	//Conditions for epilogue block
+		//if it is unallocated and the current size can accommodate the new block
+		if ((allocBit != 1) && (blockSize >= extendedSize))
+			return ptr;
+		
+		//go to next block and get blockSize and allocBit
+		ptr = ptr + blockSize;
+		blockSize = getSize(ptr);
+		allocBit = getAllocation(ptr);
+	}
+
+	return NULL;
+
+}
+
+
+
+
 /* Initializes the memory block with prologue, epilogue, header and footer
 	INPUT: The char pointer to the beginning of the memory block
 	OUTPUT: None
@@ -67,7 +110,7 @@ char * getPrevious(char * ptr){
 	char * footer = ptr - 8;
 	int size = (*(int*) footer) & ~1;
 	// This is the first block. The previous block is the prologue block
-	if (size == 0)
+	if ((size == 0) )
 		return NULL;
 	char * previous = ptr - size;
 	return previous;
@@ -84,7 +127,7 @@ char * getNext(char * ptr){
 	int size = getSize(ptr);
 	char * next = ptr + size;
 	//The current block is the last block. We have reached the epilogue block
-	if (getSize(next) == 0)
+	if ( (getSize(next) == 0) && (getAllocation(next) == 1) )
 		return NULL;
 	return next;
 }
@@ -124,7 +167,7 @@ int getSize(char * ptr){
 	OUPUT: return the last bit as an int
 */
 int getAllocation(char * p){
-	int allocated = (*(int *)p) & 1;
+	int allocated = (*(int *)getHeader(ptr)) & 1;
 	return allocated;
 }
 
