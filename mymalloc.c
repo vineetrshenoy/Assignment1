@@ -16,13 +16,33 @@ void test(){
 static char myBlock[10000];
 
 
-/* Uses the first fit algorithm to find the next block of adequate size
-	INPUT: The size of the block to be allocated
-	OUTPUT: The pointer of the available space in memory; NULL if no place
+/* Creates a space in memory based on size, if available. Returns NULL if not
+	INPUT: size_t of the block to created
+	OUTPUT: The char pointer of the available space in memory; NULL if no place
+	This also initializes the header and footer.
 */
 
 char * mymalloc(size_t size){
-	
+	size_t extendedSize;
+	char * ptr;
+
+	//Spurrious case. size = 0
+	if (size == 0)
+		return NULL;
+
+	//Adjustment for overhead and alignment
+	int adjustedSize = HDRSIZE - (size % HDRSIZE);
+	extendedSize = size + adjustedSize + (2 * HDRSIZE);
+
+	//Get pointer to block (beginnig of usuable memory) and set value if usuable
+	if ((ptr = findFit(extendedSize)) != NULL){
+		setValue(getHeader(ptr), extendedSize, 1);
+		setValue(getFooter(ptr), extendedSize, 1);
+		return ptr;
+	}
+	// Pointer way null -- no place available
+	return NULL;
+
 }
 
 
@@ -31,7 +51,7 @@ char * mymalloc(size_t size){
 
 /* Uses the first fit algorithm to find the next block of adequate size
 	INPUT: The size of the block to be allocated
-	OUTPUT: The pointer of the available space in memory; NULL if no place
+	OUTPUT: The char pointer of the available space in memory; NULL if no place
 */
 
 char * findFit(int extendedSize){
@@ -51,7 +71,7 @@ char * findFit(int extendedSize){
 		blockSize = getSize(ptr);
 		allocBit = getAllocation(ptr);
 	}
-
+	//at epilogue block without finding space
 	return NULL;
 
 }
