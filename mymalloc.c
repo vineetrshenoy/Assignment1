@@ -68,20 +68,19 @@ void* getFooter(void* bp){
 // return pointer to next block given block pointer
 void* nextBlock(void* bp){
 
-	return ((char*)(bp) + getSize(getHeader(bp)));
+	return ((char*)(bp) + getSize((char*)(bp) - WORDSIZE));
 
 }
 
 // return pointer to previous block given block pointer
 void* prevBlock(void* bp){
 
-	char* ptr = (char*)(bp) - DSIZE;
-	return ((char*)ptr - getSize(ptr) + DSIZE);
+	return ((char*)(bp) - getSize((char*)(bp) - DSIZE));
 
 }
 
-static char myblock[131072];
-
+static char myblock[20000];
+int beenAccessed = 0;
 
 void init(){
 
@@ -104,13 +103,13 @@ void init(){
 static void* coalesce(void* bp){
 
 	printf("Attempting to coalesce blocks of size %d, %d, %d\n", getSize(getFooter(prevBlock(bp))), getSize(getHeader(bp)), getSize(getHeader(nextBlock(bp))));
-	printf("Where prev footer is at %d and next header is at %d\n", (char*)getFooter(prevBlock(bp)) - (char*)myblock, (char*)getHeader(nextBlock(bp)) - (char*)myblock);
+	// printf("Where prev footer is at %d and next header is at %d\n", (char*)getFooter(prevBlock(bp)) - (char*)myblock, (char*)getHeader(nextBlock(bp)) - (char*)myblock);
+	// the trouble is coming from getting the footer or header of the previous block of bp
+	// this must mean the writing of the current or previous block has been done incorrectly
 	unsigned int prev_alloc = getAlloc(getFooter(prevBlock(bp)));
 	unsigned int next_alloc = getAlloc(getHeader(nextBlock(bp)));
 	unsigned int size = getSize(getHeader(bp));
 	printf("PREV ALLOC IS %d, NEXT ALLOC IS %d\n", prev_alloc, next_alloc);
-
-
 
 	if (prev_alloc && next_alloc){ 					// CASE 1
 		return bp;
@@ -121,7 +120,8 @@ static void* coalesce(void* bp){
 		put(getFooter(nextBlock(bp)), pack(size, 0));
 	}
 	else if (!prev_alloc && next_alloc){			// CASE 3
-		if ((char*)(bp) - (char*)myblock == DSIZE){
+
+		if ((char*)(bp) - (char*)myblock <= DSIZE){
 			size += 0;
 			put(getFooter(bp), pack(size, 0));
 			put(getHeader(bp), pack(size, 0));
@@ -135,7 +135,7 @@ static void* coalesce(void* bp){
 
 	}
 	else { 											// CASE 4
-		if ((char*)(bp) - (char*)myblock == DSIZE){
+		if ((char*)(bp) - (char*)myblock <= DSIZE){
 			size += getSize(getHeader(nextBlock(bp)));
 			put(getHeader(bp), pack(size, 0));
 			put(getFooter(nextBlock(bp)), pack(size, 0));
@@ -156,26 +156,40 @@ static void* coalesce(void* bp){
 // frees allocated memory given block pointer bp
 void myfree(void* bp, int a, int b){
 
+	if (bp == NULL){
+		printf("Pointer is null, nothing to free\n");
+		return;
+	}
+
+	unsigned int alloc = getAlloc(getHeader(bp));
+	if (alloc == 0){
+		printf("Error:  Memory is already free\n");
+		return;
+	}
+
 	printf("\nBeginning free process\n");
 
 	size_t size = getSize(getHeader(bp));
 
 	put(getHeader(bp), pack(size, 0));
-	printf("Address at %p, myblock starts at %p, relative address is %d\n", (char*)(bp), (char*)myblock, (char*)(bp) - (char*)myblock);
+
 	printf("relative address of header is %d, relative address of footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
 	put(getFooter(bp), pack(size, 0));
+	// printf("peeeeeeenis\n");
 
 
 	coalesce(bp);
 	printf("Coalesce complete, free successful!\n\n");
 
+
 }
 
+// finds memory location that will fit request
 void* findFit(size_t size){
 
 	char* bp;
 	for (bp = (char*)myblock + DSIZE; getSize(getHeader(bp)) > 0; bp = nextBlock(bp)){
-		printf("Size is: %d, Alloc is %d\n", getSize(getHeader(bp)), getAlloc(getHeader(bp)));
+		// printf("Size is: %d, Alloc is %d\n", getSize(getHeader(bp)), getAlloc(getHeader(bp)));
 		if (!getAlloc(getHeader(bp)) && (size <= getSize(getHeader(bp)))){
 			return bp;
 		}
@@ -183,48 +197,65 @@ void* findFit(size_t size){
 	return NULL;
 }
 
+// places the allocated block into memory, splitting the free block
 static void place(void* bp, size_t size){
-
-
-
 	size_t csize = getSize(getHeader(bp));
-	if ((csize - size) > (2*DSIZE)){
+	if ((csize - size) >= (2*DSIZE)){
 		put(getHeader(bp), pack(size, 1));
 		put(getFooter(bp), pack(size, 1));
-		printf("relative address of header is %d, relative address of footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
+		// printf("relative address of header is %d, relative address of footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
 
 		bp = nextBlock(bp);
+
 		put(getHeader(bp), pack(csize-size, 0));
 		put(getFooter(bp), pack(csize-size, 0));
-		printf("relative address of new header is %d, relative address of new footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
+
+		// printf("relative address of new header is %d, relative address of new footer is %d\n", (char*)(getHeader(bp)) - (char*)myblock, (char*)(getFooter(bp)) - (char*)myblock);
 	}
 	else {
 		put(getHeader(bp), pack(csize, 1));
 		put(getFooter(bp), pack(csize, 1));
+		// printf("THIS HAPPENED HERE\n");
+
 	}
+
 }
 
+// dynamically allocates memory of the given size, and returns a pointer to it
 void* mymalloc(size_t size, int a, int b){
 
+	if (beenAccessed == 0){
+		init();
+		beenAccessed = 1;
+
+	}
 	size_t asize;
 	char* bp;
 
 	// ignore spurious requests
 	if (size <= 0){
+		printf("Request of 0 bytes is ignored...\n");
 		return NULL;
 	}
 
 	// adjust block size to include overhead and alignment requirements
 	int adjSize = 4 - (size % 4);
+	if (size % 4 == 0){
+		adjSize -= 4;
+	}
 	asize = size + adjSize;
+	if (asize < 8){
+		asize = 8;
+	}
 	asize += 2*WORDSIZE;
-	printf("%d %d %d %d\n", size, adjSize, size + adjSize, asize);
+	// printf("%d %d %d %d\n", size, adjSize, size + adjSize, asize);
 
 	// search the free list for a fit
 	if ((bp = findFit(asize)) != NULL){
-		printf("Relative address of bp is %d\n", (char*)(bp) - (char*)myblock);
+		//printf("Relative address of bp is %d\n", (char*)(bp) - (char*)myblock);
 		place(bp, asize);
-		printf("\nAllocation complete!\n");
+		printf("Allocation complete!\n\n");
+
 		return bp;
 	}
 
@@ -233,21 +264,4 @@ void* mymalloc(size_t size, int a, int b){
 	return NULL;
 }
 
-
-
-
-int main(){
-	init();
-
-	char *wilbur[3000];
-		int i;
-		for (i = 0; i < 3000; i++){
-			wilbur[i] = (char*)malloc(sizeof(char));
-			*(wilbur[i]) = 'a';
-		}
-		for (i = 0; i < 3000; i++){
-			free(wilbur[i]);
-		}
-
-}
 
