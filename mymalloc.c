@@ -24,20 +24,36 @@ static char myBlock[10000];
 
 char * mymalloc(size_t size){
 	size_t extendedSize;
-	char * ptr;
+	char * ptr,headerPointer, footerPointer;
+	int oldSize, difference, adjustedSize;
 
 	//Spurrious case. size = 0
 	if (size == 0)
 		return NULL;
 
 	//Adjustment for overhead and alignment
-	int adjustedSize = HDRSIZE - (size % HDRSIZE);
+	adjustedSize = HDRSIZE - (size % HDRSIZE);
 	extendedSize = size + adjustedSize + (2 * HDRSIZE);
 
 	//Get pointer to block (beginnig of usuable memory) and set value if usuable
 	if ((ptr = findFit(extendedSize)) != NULL){
-		setValue(getHeader(ptr), extendedSize, 1);
-		setValue(getFooter(ptr), extendedSize, 1);
+		 oldSize = getSize(ptr);		//Get the old size of the block
+		 difference =  oldSize - extendedSize;
+		//Case 1
+		if ((oldSize > extendedSize) && (difference > (2 * HDRSIZE))){	
+			setValue(getFooter(ptr), difference,0);
+			setValue(getHeader(ptr), extendedSize,1);
+			footerPointer = ptr + extendedSize - (2 * HDRSIZE);
+			setValue(footerPointer,extendedSize,1);
+			setValue(footerPointer + 4, difference, 0);
+
+		}
+		else{
+			setValue(getHeader(ptr), oldSize, 1);
+			setValue(getFooter(ptr), oldSize, 1);
+		}
+
+
 		return ptr;
 	}
 	// Pointer way null -- no place available
