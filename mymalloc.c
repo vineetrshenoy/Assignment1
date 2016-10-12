@@ -5,7 +5,7 @@
 
 
 #define HDRSIZE 4
-#define MEMSIZE 10000
+#define MEMSIZE 32
 
 void test(){
 	printf("Entered the void method\n");
@@ -13,7 +13,7 @@ void test(){
 } 
 
 
-static char myBlock[10000];
+static char myBlock[32];
 
 
 /* Creates a space in memory based on size, if available. Returns NULL if not
@@ -24,7 +24,9 @@ static char myBlock[10000];
 
 char * mymalloc(size_t size){
 	size_t extendedSize;
-	char * ptr,headerPointer, footerPointer;
+	char * ptr;
+	char *headerPointer;
+	char * footerPointer;
 	int oldSize, difference, adjustedSize;
 
 	//Spurrious case. size = 0
@@ -32,7 +34,7 @@ char * mymalloc(size_t size){
 		return NULL;
 
 	//Adjustment for overhead and alignment
-	adjustedSize = HDRSIZE - (size % HDRSIZE);
+	adjustedSize = (HDRSIZE - (size % HDRSIZE)) % HDRSIZE;
 	extendedSize = size + adjustedSize + (2 * HDRSIZE);
 
 	//Get pointer to block (beginnig of usuable memory) and set value if usuable
@@ -43,7 +45,9 @@ char * mymalloc(size_t size){
 		if ((oldSize > extendedSize) && (difference > (2 * HDRSIZE))){	
 			setValue(getFooter(ptr), difference,0);
 			setValue(getHeader(ptr), extendedSize,1);
+			footerPointer = ptr;
 			footerPointer = ptr + extendedSize - (2 * HDRSIZE);
+			//footerPointer = (char *) (ptr + extendedSize - (2 * HDRSIZE));
 			setValue(footerPointer,extendedSize,1);
 			setValue(footerPointer + 4, difference, 0);
 
@@ -72,12 +76,12 @@ char * mymalloc(size_t size){
 
 char * findFit(int extendedSize){
 	char * ptr = myBlock;	//beginning of memory
-	ptr = ptr + HDRSIZE; 	//Move past prologue block
+	ptr = ptr + (2 * HDRSIZE); 	//Move past prologue block and header
 	
-	//blockSize and allocated bit of the first block in mmory
+	//blockSize and allocated bit of the first block in memory
 	int blockSize  = getSize(ptr);
 	int allocBit = getAllocation(ptr);
-	while ((blockSize ! = 0) && (allocBit != 1))	{	//Conditions for epilogue block
+	while ((blockSize != 0) && (allocBit != 1))	{	//Conditions for epilogue block
 		//if it is unallocated and the current size can accommodate the new block
 		if ((allocBit != 1) && (blockSize >= extendedSize))
 			return ptr;
@@ -202,7 +206,7 @@ int getSize(char * ptr){
 	INPUT: char pointer to header
 	OUPUT: return the last bit as an int
 */
-int getAllocation(char * p){
+int getAllocation(char * ptr){
 	int allocated = (*(int *)getHeader(ptr)) & 1;
 	return allocated;
 }
@@ -246,15 +250,14 @@ char * createExtremities(char * p, int size, int allocated){
 
 int main(){
 	printf("HelloWorld\n");	
-	char * hi = (char * ) malloc (128 *sizeof(char));
-	*hi = 16 | 0;
-	printf("The address of myBlock is %p \n", myBlock);
 	initialize(myBlock);
 	printf("The address of myBlock is %p \n", myBlock);
-	int *block = myBlock + 4;
+	int *block = (int *) (myBlock + 4);
 	printf("The header has address %p and value %#010x\n", block, *block);
-	int * footer = myBlock + *block;
+	int * footer = (int *) (myBlock + *block);
 	printf("The footer has address %p and value %#010x\n", footer, *footer);
+	char * test = mymalloc(14);
+	printf("Process complete\n");
 
 	/*
 	char * ptr = (char * ) malloc(256*sizeof(char));
