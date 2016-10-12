@@ -5,7 +5,7 @@
 
 
 #define HDRSIZE 4
-#define MEMSIZE 32
+#define MEMSIZE 64
 
 void test(){
 	printf("Entered the void method\n");
@@ -13,7 +13,7 @@ void test(){
 } 
 
 
-static char myBlock[32];
+static char myBlock[64];
 
 
 /* Creates a space in memory based on size, if available. Returns NULL if not
@@ -81,7 +81,7 @@ char * findFit(int extendedSize){
 	//blockSize and allocated bit of the first block in memory
 	int blockSize  = getSize(ptr);
 	int allocBit = getAllocation(ptr);
-	while ((blockSize != 0) && (allocBit != 1))	{	//Conditions for epilogue block
+	while ( blockSize != 0 )	{	//Conditions for epilogue block
 		//if it is unallocated and the current size can accommodate the new block
 		if ((allocBit != 1) && (blockSize >= extendedSize))
 			return ptr;
@@ -124,21 +124,89 @@ void initialize(char * memBlock){
 */
 
 void free(void * ptr){
-	//Gets the header and footer
-	char * header = (char *) getHeader(ptr);
-	char * footer = (char *) getFooter(ptr);
+	char *  next;
+	char * previous;
+	int size;
 	
 	//Gets the size and allocated bit
-	int size = getSize(ptr);
+	size = getSize(ptr);
 	
 	//sets the value for header and footer
-	setValue(header, size, 0);
-	setValue(footer, size, 0);
+	setValue(getHeader(ptr), size, 0);
+	setValue(getFooter(ptr), size, 0);
 
 
-	//coalesce
+	coalesce(ptr);
 
 }
+
+/* Coalesces memory blcoks based on the current, previous, and next blocks
+	INPUT: The char pointer pointing to the block we want to free
+	OUTPUT: None
+*/
+void coalesce(char * ptr){
+	char * previous;
+	char * next;
+	int allocPrevious, allocNext, size;
+
+	previous  = getPrevious(ptr);
+	next = getNext(ptr);
+	size = getSize(ptr);
+
+	//This is to check if the next or previos blocks are null
+	if (previous != NULL)
+		allocPrevious = getAllocation(previous);
+	else
+		allocPrevious = 1;
+	
+	if (next != NULL)
+		allocNext = getAllocation(next);
+	else
+		allocNext = 1;
+
+
+	//Case 1: Neither the previous or next blocks are free
+	if ((allocPrevious == 1) && (allocNext == 1)){
+		return;
+	}
+	//Case 2: Previous block is free, but next block is allocated
+	else if ((allocPrevious == 0) && (allocNext == 1)){
+		size = size + getSize(previous); 
+		setValue(getFooter(previous), 0 ,0);
+		setValue(getHeader(previous), size, 0);
+		setValue(getFooter(ptr), size, 0);
+		setValue(getHeader(ptr), 0,0);
+
+	}
+
+	//Case 3: Next block is free, but previous block is allocated
+	else if ((allocPrevious == 1) && (allocNext == 0)){
+		size = size + getSize(next); 
+		setValue(getFooter(ptr), 0 ,0);
+		setValue(getHeader(ptr), size, 0);
+		setValue(getFooter(next), size, 0);
+		setValue(getHeader(next), 0,0);
+
+	}
+
+	//Case 4: Both previous and next blocks are free
+	else if ((allocPrevious == 0) && (allocNext == 0)){
+		size = size + getSize(previous) + getSize(next); 
+		setValue(getFooter(previous),0 ,0);
+		setValue(getHeader(previous), size, 0);
+		setValue(getFooter(ptr), 0,0);
+		setValue(getHeader(ptr), 0, 0);
+		setValue(getFooter(next), size, 0);
+		setValue(getHeader(next), 0 , 0);
+
+	}
+
+
+	
+}
+
+
+
 
 /* Returns the pointer to the previous block. NOTE: this pointer points to the beginning
 	of usable memory. You must call getHeader() to get the header
@@ -256,8 +324,14 @@ int main(){
 	printf("The header has address %p and value %#010x\n", block, *block);
 	int * footer = (int *) (myBlock + *block);
 	printf("The footer has address %p and value %#010x\n", footer, *footer);
-	char * test = mymalloc(14);
+	char * test1 = mymalloc(8);
 	printf("Process complete\n");
+	char * test2 = mymalloc(8);
+	char * test3 = mymalloc(8);
+	//char * test3 = mymalloc(8);
+	free(test1);
+	free(test2);
+	printf("Process Complete\n");
 
 	/*
 	char * ptr = (char * ) malloc(256*sizeof(char));
