@@ -5,7 +5,10 @@
 
 
 #define HDRSIZE 4
-#define MEMSIZE 64
+#define MEMSIZE 20000
+
+#define malloc(x) mymalloc(x,__LINE__,__FILE__)
+#define free(x) myfree(x,__LINE__,__FILE__)
 
 void test(){
 	printf("Entered the void method\n");
@@ -13,7 +16,7 @@ void test(){
 } 
 
 
-static char myBlock[64];
+static char myBlock[20000];
 
 
 /* Creates a space in memory based on size, if available. Returns NULL if not
@@ -30,8 +33,10 @@ char * mymalloc(size_t size){
 	int oldSize, difference, adjustedSize;
 
 	//Spurrious case. size = 0
-	if (size == 0)
+	if (size == 0){
+		printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", __FILE__, __LINE__ );
 		return NULL;
+	}
 
 	//Adjustment for overhead and alignment
 	adjustedSize = (HDRSIZE - (size % HDRSIZE)) % HDRSIZE;
@@ -61,6 +66,7 @@ char * mymalloc(size_t size){
 		return ptr;
 	}
 	// Pointer way null -- no place available
+	//printf("Unable to allocated space. Returning NULL in %s at line %d \n", __FILE__, __LINE__);
 	return NULL;
 
 }
@@ -104,7 +110,10 @@ char * findFit(int extendedSize){
 	OUTPUT: None
 */
 
-void initialize(char * memBlock){
+void initialize(){
+	char * memBlock;
+
+	memBlock = myBlock;
 	setValue(memBlock,0,1); 	//Setting the prologue block
 	char * epilogue = memBlock + MEMSIZE - HDRSIZE;	//Get address of epilogue
 	setValue(epilogue, 0, 1);	//Setting the epilogue block
@@ -123,11 +132,20 @@ void initialize(char * memBlock){
 	OUTPUT: None
 */
 
-void free(void * ptr){
+void myfree(void * ptr){
 	char *  next;
 	char * previous;
 	int size;
 	
+	if (ptr == NULL){
+		//printf("Unable to free a NULL pointer in %s line  %d \n",__FILE__,__LINE__);
+		return;
+	}
+
+	if (getAllocation(ptr) == 0){
+		//printf("Can not free an already free block in %s line %d\n", __FILE__, __LINE__);
+	}
+
 	//Gets the size and allocated bit
 	size = getSize(ptr);
 	
@@ -314,7 +332,7 @@ char * createExtremities(char * p, int size, int allocated){
 
 
 
-
+/*
 
 int main(){
 	printf("HelloWorld\n");	
@@ -329,10 +347,10 @@ int main(){
 	char * test2 = mymalloc(8);
 	char * test3 = mymalloc(8);
 	//char * test3 = mymalloc(8);
-	free(test1);
-	free(test2);
+	myfree(test1);
+	myfree(test2);
 	printf("Process Complete\n");
-
+	return 0;
 	/*
 	char * ptr = (char * ) malloc(256*sizeof(char));
 	printf("The address BEFORE manipulation is %p\n", ptr);
@@ -346,9 +364,10 @@ int main(){
 	char * footer = getFooter(ptr);
 	printf("The FOOTER is at location %p \n", footer);
 	printf("and has value %#010x\n", *footer);
-	*/
+	
 
 }
 
-    
+ 
+ */   
 
