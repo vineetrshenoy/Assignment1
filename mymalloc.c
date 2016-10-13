@@ -5,7 +5,7 @@
 
 
 #define HDRSIZE 4
-#define MEMSIZE 20000
+#define MEMSIZE 5000
 
 #define malloc(x) mymalloc(x,__LINE__,__FILE__)
 #define free(x) myfree(x,__LINE__,__FILE__)
@@ -16,7 +16,7 @@ void test(){
 } 
 
 
-static char myBlock[20000];
+static char myBlock[5000];
 
 
 /* Creates a space in memory based on size, if available. Returns NULL if not
