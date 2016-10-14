@@ -119,7 +119,7 @@ double grindC(){
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
 	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
-	diff = (double) diff / BILLION;
+	diff = (double) (diff / BILLION) * 10;
 
 	/*
 	printf("\n");
