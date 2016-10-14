@@ -7,7 +7,7 @@
 #define HDRSIZE 4
 #define MEMSIZE 5000
 
-#define malloc(x) mymalloc(x,__LINE__,__FILE__)
+#define malloc(x) mymymalloc(x,__LINE__,__FILE__)
 #define free(x) myfree(x,__LINE__,__FILE__)
 
 void test(){
@@ -34,7 +34,7 @@ char * mymalloc(size_t size){
 
 	//Spurrious case. size = 0
 	if (size == 0){
-		printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", __FILE__, __LINE__ );
+		// printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", __FILE__, __LINE__ );
 		return NULL;
 	}
 
@@ -139,6 +139,13 @@ void myfree(void * ptr){
 	
 	if (ptr == NULL){
 		//printf("Unable to free a NULL pointer in %s line  %d \n",__FILE__,__LINE__);
+		return;
+	}
+
+	int relativeAddress = (char*)(ptr) - (char*)myBlock
+
+	if (relativeAddress > sizeof(myBlock) - 2*HDRSIZE || relativeAddress < HDRSIZE){
+		//printf("Not a freeable memory address in %s line  %d \n",__FILE__,__LINE__);
 		return;
 	}
 
@@ -342,17 +349,17 @@ int main(){
 	printf("The header has address %p and value %#010x\n", block, *block);
 	int * footer = (int *) (myBlock + *block);
 	printf("The footer has address %p and value %#010x\n", footer, *footer);
-	char * test1 = mymalloc(8);
+	char * test1 = mymymalloc(8);
 	printf("Process complete\n");
-	char * test2 = mymalloc(8);
-	char * test3 = mymalloc(8);
-	//char * test3 = mymalloc(8);
+	char * test2 = mymymalloc(8);
+	char * test3 = mymymalloc(8);
+	//char * test3 = mymymalloc(8);
 	myfree(test1);
 	myfree(test2);
 	printf("Process Complete\n");
 	return 0;
 	/*
-	char * ptr = (char * ) malloc(256*sizeof(char));
+	char * ptr = (char * ) mymalloc(256*sizeof(char));
 	printf("The address BEFORE manipulation is %p\n", ptr);
 	ptr = createExtremities(ptr, 16, 1);
 	setValue(getHeader(ptr), 4,0);
