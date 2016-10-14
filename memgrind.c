@@ -6,6 +6,9 @@
 #include <stdint.h>
 
 #define BILLION 1000000000L
+#define malloc(x) mymalloc(x,__LINE__,__FILE__)
+#define free(x) myfree(x,__LINE__,__FILE__)
+
 
 void memvoid(){
 	printf("Entered the memvoid method\n");
@@ -21,32 +24,23 @@ double grindA(){
 	//printf("Beginning grind process A \n");
 	initialize();
 
-	clock_gettime(CLOCK_MONOTONIC, &start); /* mark start time */
+	clock_gettime(CLOCK_MONOTONIC, &start); // mark start time 
 	//Perfoming 3000 1 byte mallocs
 	for (i = 0; i < 3000; i++){
-		pointers[i] = mymalloc(1);
+		pointers[i] = malloc(1);
 		if (pointers[i] != NULL)
 			count++;
 	}
 	//freeing all pointers
 	for (i = 0; i < 3000; i++){
-		myfree(pointers[i]);
+		free(pointers[i]);
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	
 
 	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
 	diff = (double) diff/BILLION;
-	/*
-	printf("\n");
-	printf("\n");
-	printf("\n");
-	printf("NUMBER OF SUCCESSFUL MALLOCS: %d \n", count);
-	printf("\n");
-	printf("\n");
-	printf("\n");
-	printf("elapsed time grindA= %.5f seconds\n",  diff);	
-	*/
+	
 	return diff;
 }
 
@@ -60,28 +54,18 @@ double grindB(){
 	initialize();
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	//A single byte malloc followed by 3000 frees
-	char * test  = mymalloc(1);
+	char * test  = malloc(1);
 	for (i = 0; i < 3000; i++)
-		myfree(test);
+		free(test);
 
-	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
+	clock_gettime(CLOCK_MONOTONIC, &end); // mark the end time 
 	
 
 	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
 	diff = (double) diff/BILLION;
-	/*
-	printf("\n");
-	printf("\n");
-	printf("\n");
-	//printf("NUMBER OF SUCCESSFUL MALLOCS: \n");
-	printf("\n");
-	printf("\n");
-	printf("\n");
-	//printf("elapsed time grindB= %.5f second\n",  diff);	
-	*/
+	
 	return diff;
 }
-
 
 
 
@@ -101,12 +85,12 @@ double grindC(){
 		randNum = rand();
 		randNum = randNum % 2;
 		if (randNum == 0){		//if remainder is zero, mallloc and increas count
-			pointers[mallocCount] = mymalloc(1);
+			pointers[mallocCount] = malloc(1);
 			mallocCount++;
 		}
 		else{	//check if the freeCountis before malloc. then it is ok to free
 			if (freeCount < mallocCount){
-				myfree(pointers[freeCount]);
+				free(pointers[freeCount]);
 				freeCount++;
 			}
 		}
@@ -115,18 +99,13 @@ double grindC(){
 
 
 	while(freeCount < MAX){
-		myfree(pointers[freeCount]);
+		free(pointers[freeCount]);
 		freeCount++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
 	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
 	diff = (double) diff/BILLION;
-	/*
-	printf("\n");
-	printf("\n");
-	printf("\n");
-	//printf("elapsed time grindC= %.5f second\n",  diff);
-	*/
+	
 	return diff;
 }
 
@@ -147,12 +126,12 @@ double grindD(){
 		randNum = rand();
 		randNum = randNum % 2;
 		if (randNum == 0){		//if remainder is zero, mallloc and increas count
-			pointers[mallocCount] = mymalloc(rand() % 3000);
+			pointers[mallocCount] = malloc(rand() % 3000);
 			mallocCount++;
 		}
 		else{	//check if the freeCountis before malloc. then it is ok to free
 			if (freeCount < mallocCount){
-				myfree(pointers[freeCount]);
+				free(pointers[freeCount]);
 				freeCount++;
 			}
 		}
@@ -161,18 +140,13 @@ double grindD(){
 
 
 	while(freeCount < MAX){
-		myfree(pointers[freeCount]);
+		free(pointers[freeCount]);
 		freeCount++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
 	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
 	diff = (double) diff/BILLION;
-	/*
-	printf("\n");
-	printf("\n");
-	printf("\n");
-	printf("elapsed time grindD= %.5f second\n",  diff);
-	*/
+	
 	return diff;
 }
 
@@ -235,6 +209,6 @@ int main(){
 	printf("\n");
 	printf("\n");	
 
-
+	
 	return 0;
 }
