@@ -34,7 +34,7 @@ char * mymalloc(size_t size){
 
 	//Spurrious case. size = 0
 	if (size == 0){
-		printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", __FILE__, __LINE__ );
+		//printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", __FILE__, __LINE__ );
 		return NULL;
 	}
 

@@ -35,7 +35,8 @@ double grindA(){
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	
 
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION; 
+	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff/BILLION;
 	/*
 	printf("\n");
 	printf("\n");
@@ -66,7 +67,8 @@ double grindB(){
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	
 
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION; 
+	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff/BILLION;
 	/*
 	printf("\n");
 	printf("\n");
@@ -117,8 +119,8 @@ double grindC(){
 		freeCount++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION;
-
+	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff/BILLION;
 	/*
 	printf("\n");
 	printf("\n");
@@ -163,8 +165,8 @@ double grindD(){
 		freeCount++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION;
-
+	diff = (double) BILLION *(end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff/BILLION;
 	/*
 	printf("\n");
 	printf("\n");
