@@ -38,6 +38,11 @@ void * mymalloc(size_t size, int a, char * b){
 		return NULL;
 	}
 
+	else if (size > MEMSIZE){
+		printf("WARNING. Size exceeds memory size. Returning NULL Pointer at %s and line %d\n", b, a);
+		return NULL;
+	}
+
 	//Adjustment for overhead and alignment
 	adjustedSize = (HDRSIZE - (size % HDRSIZE)) % HDRSIZE;
 	extendedSize = size + adjustedSize + (2 * HDRSIZE);
