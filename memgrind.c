@@ -6,11 +6,12 @@
 #include <stdint.h>
 
 #define BILLION 1000000000L
+#define malloc(x) mymalloc(x,__FILE__,__LINE__)
+#define free(x)   myfree(x,__FILE__,__LINE__)
 
 void memvoid(){
 	printf("Entered the memvoid method\n");
 }
-
 
 double grindA(){
 	int i, count;
@@ -19,28 +20,28 @@ double grindA(){
 	struct timespec start, end;
 
 	//printf("Beginning grind process A \n");
-	initialize();
 
 	clock_gettime(CLOCK_MONOTONIC, &start); /* mark start time */
-	//Perfoming 3000 1 byte mallocs
+	//Perfoming 3000 1 byte mymallocs
 	for (i = 0; i < 3000; i++){
 		pointers[i] = mymalloc(1);
 		if (pointers[i] != NULL)
 			count++;
 	}
-	//freeing all pointers
+	//myfreeing all pointers
 	for (i = 0; i < 3000; i++){
 		myfree(pointers[i]);
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	
 
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION; 
+	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff / BILLION;
 	/*
 	printf("\n");
 	printf("\n");
 	printf("\n");
-	printf("NUMBER OF SUCCESSFUL MALLOCS: %d \n", count);
+	printf("NUMBER OF SUCCESSFUL mymallocS: %d \n", count);
 	printf("\n");
 	printf("\n");
 	printf("\n");
@@ -56,9 +57,8 @@ double grindB(){
 	double diff; 
 	struct timespec start, end;
 
-	initialize();
 	clock_gettime(CLOCK_MONOTONIC, &start);
-	//A single byte malloc followed by 3000 frees
+	//A single byte mymalloc followed by 3000 myfrees
 	char * test  = mymalloc(1);
 	for (i = 0; i < 3000; i++)
 		myfree(test);
@@ -66,12 +66,13 @@ double grindB(){
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	
 
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION; 
+	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff / BILLION;
 	/*
 	printf("\n");
 	printf("\n");
 	printf("\n");
-	//printf("NUMBER OF SUCCESSFUL MALLOCS: \n");
+	//printf("NUMBER OF SUCCESSFUL mymallocS: \n");
 	printf("\n");
 	printf("\n");
 	printf("\n");
@@ -86,38 +87,39 @@ double grindB(){
 double grindC(){
 	int MAX = 3000;
 	char * pointers[3000];
-	int mallocCount, freeCount, randNum;
+	int mymallocCount, myfreeCount, randNum;
 	double diff; 
 	struct timespec start, end;
 
 
 
-	mallocCount = freeCount = 0;
+	mymallocCount = myfreeCount = 0;
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
-	while(mallocCount < MAX){	//until we hit 3000 mallocs
+	while(mymallocCount < MAX){	//until we hit 3000 mymallocs
 		randNum = rand();
 		randNum = randNum % 2;
 		if (randNum == 0){		//if remainder is zero, mallloc and increas count
-			pointers[mallocCount] = mymalloc(1);
-			mallocCount++;
+			pointers[mymallocCount] = mymalloc(1);
+			mymallocCount++;
 		}
-		else{	//check if the freeCountis before malloc. then it is ok to free
-			if (freeCount < mallocCount){
-				myfree(pointers[freeCount]);
-				freeCount++;
+		else{	//check if the myfreeCountis before mymalloc. then it is ok to myfree
+			if (myfreeCount < mymallocCount){
+				myfree(pointers[myfreeCount]);
+				myfreeCount++;
 			}
 		}
 
 	}
 
 
-	while(freeCount < MAX){
-		myfree(pointers[freeCount]);
-		freeCount++;
+	while(myfreeCount < MAX){
+		myfree(pointers[myfreeCount]);
+		myfreeCount++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION;
+	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff / BILLION;
 
 	/*
 	printf("\n");
@@ -132,38 +134,39 @@ double grindC(){
 double grindD(){
 	int MAX = 3000;
 	char * pointers[3000];
-	int mallocCount, freeCount, randNum;
+	int mymallocCount, myfreeCount, randNum;
 	double diff; 
 	struct timespec start, end;
 
 
 
-	mallocCount = freeCount = 0;
+	mymallocCount = myfreeCount = 0;
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
-	while(mallocCount < MAX){	//until we hit 3000 mallocs
+	while(mymallocCount < MAX){	//until we hit 3000 mymallocs
 		randNum = rand();
 		randNum = randNum % 2;
 		if (randNum == 0){		//if remainder is zero, mallloc and increas count
-			pointers[mallocCount] = mymalloc(rand() % 3000);
-			mallocCount++;
+			pointers[mymallocCount] = mymalloc(rand() % 3000);
+			mymallocCount++;
 		}
-		else{	//check if the freeCountis before malloc. then it is ok to free
-			if (freeCount < mallocCount){
-				myfree(pointers[freeCount]);
-				freeCount++;
+		else{	//check if the myfreeCountis before mymalloc. then it is ok to myfree
+			if (myfreeCount < mymallocCount){
+				myfree(pointers[myfreeCount]);
+				myfreeCount++;
 			}
 		}
 
 	}
 
 
-	while(freeCount < MAX){
-		myfree(pointers[freeCount]);
-		freeCount++;
+	while(myfreeCount < MAX){
+		myfree(pointers[myfreeCount]);
+		myfreeCount++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	diff = (double) (((end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec))/BILLION;
+	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff / BILLION;
 
 	/*
 	printf("\n");
@@ -174,13 +177,87 @@ double grindD(){
 	return diff;
 }
 
+double grindE(){
 
-int main(){
-	double timeA, timeB, timeC, timeD, sum, i;
-	sum = 0;
-	srand(time(NULL));
+	double diff; 
+	struct timespec start, end;
 
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	int max = 3000;
+	char * pointers[max];
+	int i;
+	for (i = 0; i < max; i++){
+		int randNum = rand() % 5;
+		int randSize = rand() % 20;
+		switch (randNum) {
+			case 0:
+				pointers[i] = (int*)mymalloc(randSize*sizeof(int));
+				break;
+			case 1:
+				pointers[i] = (float*)mymalloc(randSize*sizeof(float));
+				break;
+			case 3:
+				pointers[i] = (char*)mymalloc(randSize*sizeof(char));
+				break;
+			case 4:
+				pointers[i] = (double*)mymalloc(randSize*sizeof(double));
+				break;
+			default:
+				break;
+				// do nothing
+		}
+	}
+	for (i = 0; i < max; i++){
+
+		myfree(pointers[i]);
+	}
+	
+
+
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff / BILLION;
+	return diff;
+
+}
+
+double grindF(){
+
+	double diff; 
+	struct timespec start, end;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
+	int max = 3000;
+	char * pointers[max];
+	int size = 10;
+	int i;
+	for (i = 0; i < max/2; i++){
+		pointers[i] = (char*)mymalloc(size);
+		size += 5;
+	}
+	for (i = 0; i < max/2; i++){
+		myfree(pointers[i]);
+	}
+	for (i = max/2; i < max; i++){
+		pointers[i] = (char*)mymalloc(size);
+		size -= 5;
+	}
+	for (i = max/2; i < max; i++){
+		myfree(pointers[i]);
+	}
+
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	diff = (double) BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; 
+	diff = (double) diff / BILLION;
+	return diff;
+
+}
+
+void callGrindA(){
+	double timeA, sum, i;
 	//One-hundred grindA
+	sum = 0;
 	for (i = 0; i < 100; i++){
 		timeA = grindA();
 		sum += timeA;
@@ -191,7 +268,11 @@ int main(){
 	printf("The average time for 100 grindA is: %.5f \n", sum);
 	printf("\n");
 	printf("\n");
-	
+}
+
+void callGrindB(){
+
+	double timeB, sum, i;
 	//One Hundred grindB
 	sum = 0;
 	for (i = 0; i < 100; i++){
@@ -204,8 +285,11 @@ int main(){
 	printf("The average time for 100 grindB is: %.5f \n", sum);
 	printf("\n");
 	printf("\n");
-	
+}
 
+void callGrindC(){
+
+	double timeC, sum, i;
 	//One hundred grindC
 	sum = 0;
 	for (i = 0; i < 100; i++){
@@ -218,8 +302,11 @@ int main(){
 	printf("The average time for 100 grindC is: %.5f \n", sum);
 	printf("\n");
 	printf("\n");	
+}
 
+void callGrindD(){
 
+	double timeD, sum, i;
 	//One hundred grindD
 	sum = 0;
 	for (i = 0; i < 100; i++){
@@ -232,7 +319,55 @@ int main(){
 	printf("The average time for 100 grindD is: %.5f \n", sum);
 	printf("\n");
 	printf("\n");	
+}
 
+void callGrindE(){
+
+	double timeE, sum, i;
+	//One hundred grindD
+	sum = 0;
+	for (i = 0; i < 100; i++){
+		timeE = grindE();
+		sum += timeE;
+
+	}
+	
+	sum = sum / 100;
+	printf("The average time for 100 grindE is: %.5f \n", sum);
+	printf("\n");
+	printf("\n");	
+
+}
+
+void callGrindF(){
+
+	double timeF, sum, i;
+	// One hundred grindE
+	sum = 0;
+	for (i = 0; i < 100; i++){
+		timeF = grindF();
+		//printf("Time for process is %.5f seconds\n", timeE);
+		sum += timeF;
+
+	}
+	
+	sum = sum / 100;
+	printf("The average time for 100 grindF is: %.5f \n", sum);
+	printf("\n");
+	printf("\n");	
+}
+
+int main(){
+	
+	srand(time(NULL));
+	printf("\n");
+	
+	callGrindA();
+	callGrindB();
+	callGrindC();
+	callGrindD();
+	//callGrindE();
+	callGrindF();
 
 	return 0;
 }
