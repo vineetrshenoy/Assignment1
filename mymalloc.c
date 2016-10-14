@@ -25,7 +25,7 @@ static char myBlock[5000];
 	This also initializes the header and footer.
 */
 
-char * mymalloc(size_t size){
+char * mymalloc(size_t size, int a, int b){
 	size_t extendedSize;
 	char * ptr;
 	char *headerPointer;
@@ -132,7 +132,7 @@ void initialize(){
 	OUTPUT: None
 */
 
-void myfree(void * ptr){
+void myfree(void * ptr, int a, int b){
 	char *  next;
 	char * previous;
 	int size;
@@ -142,10 +142,10 @@ void myfree(void * ptr){
 		return;
 	}
 
-	int relativeAddress = (char*)(ptr) - (char*)myBlock
+	int relativeAddress = (char*)(ptr) - (char*)myBlock;
 
 	if (relativeAddress > sizeof(myBlock) - 2*HDRSIZE || relativeAddress < HDRSIZE){
-		//printf("Not a freeable memory address in %s line  %d \n",__FILE__,__LINE__);
+		// printf("Not a freeable memory address in %s line  %d \n",__FILE__,__LINE__);
 		return;
 	}
 
