@@ -25,7 +25,7 @@ static char myBlock[5000];
 	This also initializes the header and footer.
 */
 
-char * mymalloc(size_t size, int a, char * b){
+void * mymalloc(size_t size, int a, char * b){
 	size_t extendedSize;
 	char * ptr;
 	char *headerPointer;

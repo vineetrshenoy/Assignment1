@@ -11,5 +11,5 @@ char * getNext(char * ptr);
 char * getPrevious(char * ptr);
 void initialize();
 char * findFit(int extendedSize);
-char * mymalloc(size_t size, int a, char * b);
+void * mymalloc(size_t size, int a, char * b);
 void coalesce(char * ptr);
