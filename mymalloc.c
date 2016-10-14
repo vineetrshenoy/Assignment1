@@ -25,7 +25,7 @@ static char myBlock[5000];
 	This also initializes the header and footer.
 */
 
-char * mymalloc(size_t size, int a, int b){
+void * mymalloc(size_t size, char * b, int a){
 	size_t extendedSize;
 	char * ptr;
 	char *headerPointer;
@@ -34,7 +34,11 @@ char * mymalloc(size_t size, int a, int b){
 
 	//Spurrious case. size = 0
 	if (size == 0){
-		// printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", __FILE__, __LINE__ );
+		// printf("WARNING. Zero size. Returning NULL Pointer at %s and line %d\n", b, a );
+		return NULL;
+	}
+	else if(size > MEMSIZE){
+		//printf("Warning: size exceeds memory size. Return null at %s and line %d\n", b,a);
 		return NULL;
 	}
 
@@ -132,13 +136,13 @@ void initialize(){
 	OUTPUT: None
 */
 
-void myfree(void * ptr, int a, int b){
+void myfree(void * ptr, char * b, int a){
 	char *  next;
 	char * previous;
 	int size;
 	
 	if (ptr == NULL){
-		//printf("Unable to free a NULL pointer in %s line  %d \n",__FILE__,__LINE__);
+		//printf("Unable to free a NULL pointer in %s line  %d \n",b,a);
 		return;
 	}
 
